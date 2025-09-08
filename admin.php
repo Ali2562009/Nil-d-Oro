@@ -3,7 +3,16 @@ session_start();
 include 'db.php';
 
 // Simple admin protection (you can expand this later)
-$isAdmin = true; // set after login in real case
+session_start();
+include 'db.php';
+
+// Check if admin is logged in
+if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
+    header("Location: admin_login.php");
+    exit;
+}
+
+$result = $conn->query("SELECT * FROM orders ORDER BY created_at DESC");
 if (!$isAdmin) {
     die("Access denied.");
 }
