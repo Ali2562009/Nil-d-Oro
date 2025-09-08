@@ -5,7 +5,17 @@ if (!isset($_SESSION['admin'])) {
     exit();
 }
 ?>
-
+<h1>Welcome, <?php echo $_SESSION['admin']; ?>
+<?php
+$stmt = $conn->prepare("SELECT role FROM admins WHERE username=?");
+$stmt->bind_param("s", $_SESSION['admin']);
+$stmt->execute();
+$stmt->bind_result($role);
+$stmt->fetch();
+$stmt->close();
+if ($role === 'super') { echo " <span style='color:gold;'>👑 Super Admin</span>"; }
+?>
+</h1>
 <!DOCTYPE html>
 <html lang="en">
 <head>
