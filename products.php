@@ -2,50 +2,105 @@
 session_start();
 include("db.php");
 
+// Initialize cart
+if (!isset($_SESSION['cart'])) {
+    $_SESSION['cart'] = [];
+}
+
+// Handle adding product to cart
+if (isset($_POST['add_to_cart'])) {
+    $id = intval($_POST['product_id']);
+    $name = $_POST['product_name'];
+    $price = floatval($_POST['product_price']);
+
+    // Increment quantity if product already in cart
+    if (isset($_SESSION['cart'][$id])) {
+        $_SESSION['cart'][$id]['quantity'] += 1;
+    } else {
+        $_SESSION['cart'][$id] = ['name'=>$name, 'price'=>$price, 'quantity'=>1];
+    }
+}
+
 // Fetch products from DB
-$stmt = $conn->query("SELECT * FROM products ORDER BY created_at DESC");
+$search = $_GET['search'] ?? '';
+$sql = "SELECT * FROM products WHERE name LIKE ?";
+$stmt = $conn->prepare($sql);
+$stmt->execute(["%$search%"]);
 $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Products</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .products { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
-    .product { border: 1px solid #ccc; padding: 15px; border-radius: 10px; text-align: center; background: #fafafa; }
-    .product img { max-width: 100%; height: 150px; object-fit: cover; border-radius: 8px; }
-    .product h3 { margin: 10px 0; font-size: 18px; }
-    .product p { font-size: 14px; color: #555; }
-    .product span { display: block; margin: 8px 0; font-weight: bold; }
-    .add-to-cart { padding: 8px 12px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    .add-to-cart:hover { background: #555; }
-  </style>
+<meta charset="UTF-8">
+<title>Products</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body { font-family: Arial, sans-serif; margin: 20px; }
+.products { display: flex; flex-wrap: wrap; gap: 15px; }
+.product { border: 1px solid #ccc; padding: 10px; width: 200px; border-radius: 5px; position: relative; cursor: pointer; }
+.product h3 { margin: 0 0 10px; font-size: 16px; }
+.product p { margin: 0 0 10px; }
+button { padding: 6px 10px; border-radius: 4px; cursor: pointer; border: none; background: #333; color: white; }
+button:hover { background: #555; }
+
+/* Popup styles */
+.popup { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; }
+.popup-content { background: #fff; padding: 20px; border-radius: 5px; position: relative; max-width: 300px; text-align:center; }
+.popup-content .close { position: absolute; top:5px; right:10px; cursor:pointer; font-weight:bold; }
+</style>
 </head>
 <body>
-  <h1>Our Classic Collection</h1>
-  <form method="post">
-    <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
-    <button type="submit" name="add_to_cart" class="add-to-cart">Add to Cart</button>
+<h1>Products 🛍️</h1>
+
+<!-- Search form -->
+<form method="get">
+    <input type="text" name="search" placeholder="Search products..." value="<?= htmlspecialchars($search) ?>">
+    <button type="submit">Search</button>
 </form>
 
-  <div class="products">
-    <?php if ($products): ?>
-      <?php foreach ($products as $p): ?>
-        <div class="product">
-          <img src="<?php echo $p['image']; ?>" alt="<?php echo $p['name']; ?>">
-          <h3><?php echo $p['name']; ?></h3>
-          <p><?php echo $p['description']; ?></p>
-          <span>Price: <?php echo $p['price']; ?> EGP</span>
-          <button class="add-to-cart">Add to Cart</button>
-        </div>
-      <?php endforeach; ?>
-    <?php else: ?>
-      <p>No products available yet.</p>
-    <?php endif; ?>
-  </div>
+<div class="products">
+<?php foreach($products as $p): ?>
+<div class="product" onclick="showPopup('<?= htmlspecialchars($p['name']) ?>')">
+    <h3><?= htmlspecialchars($p['name']) ?></h3>
+    <p>Price: <?= $p['price'] ?> EGP</p>
+    <form method="post" style="margin-top:5px;">
+        <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
+        <input type="hidden" name="product_name" value="<?= htmlspecialchars($p['name']) ?>">
+        <input type="hidden" name="product_price" value="<?= $p['price'] ?>">
+        <button type="submit" name="add_to_cart">Add to Cart</button>
+    </form>
+</div>
+<?php endforeach; ?>
+</div>
+
+<!-- Popup -->
+<div class="popup" id="popup">
+    <div class="popup-content">
+        <span class="close" onclick="closePopup()">×</span>
+        <p id="popupText"></p>
+        <p>Contact us on:</p>
+        <p>WhatsApp: +201234567890</p>
+        <p>Telegram: @YourTelegram</p>
+        <p>Phone: +201234567890</p>
+    </div>
+</div>
+
+<script>
+function showPopup(name) {
+    document.getElementById('popupText').innerText = name;
+    document.getElementById('popup').style.display = 'flex';
+}
+
+function closePopup() {
+    document.getElementById('popup').style.display = 'none';
+}
+
+// Close popup when clicking outside
+document.getElementById('popup').addEventListener('click', function(e){
+    if(e.target === this) closePopup();
+});
+</script>
+
 </body>
 </html>
