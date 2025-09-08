@@ -1,68 +1,78 @@
 <?php
 session_start();
+include("db.php");
+
 $cart = $_SESSION['cart'] ?? [];
 
-// Handle Remove from Cart
-if(isset($_GET['remove'])) {
-    $id = intval($_GET['remove']);
-    unset($_SESSION['cart'][$id]);
+if(isset($_POST['update_quantity'])){
+    foreach($_POST['quantities'] as $id => $qty){
+        if($qty <= 0){
+            unset($_SESSION['cart'][$id]);
+        } else {
+            $_SESSION['cart'][$id]['quantity'] = intval($qty);
+        }
+    }
     header("Location: cart.php");
     exit();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Shopping Cart</title>
-<link rel="stylesheet" href="style.css">
+<title>Nil d’Oro - Cart</title>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 <style>
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-table, th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
-th { background: #f4f4f4; }
-img { width: 80px; height: auto; }
-.btn { padding: 6px 12px; border-radius: 4px; cursor: pointer; }
-.btn-remove { background: red; color: white; border: none; }
+body { font-family: 'Times New Roman', serif; background:#f9f5ec; margin:20px; color:#333; }
+header { text-align:center; margin-bottom:30px; }
+.logo { font-family:'Great Vibes', cursive; font-size:52px; color:#333; letter-spacing:1px; }
+table { width:80%; margin:auto; border-collapse:collapse; background:#fffdf6; box-shadow:0 4px 10px rgba(0,0,0,0.1); border-radius:10px; overflow:hidden; }
+th, td { padding:12px; border:1px solid #ccc; text-align:center; }
+th { background:#f2e9dc; }
+input[type="number"] { width:60px; padding:6px; border-radius:5px; border:1px solid #ccc; }
+button { padding:8px 14px; background:#333; color:white; border:none; cursor:pointer; border-radius:8px; font-family:'Great Vibes', cursive; }
+button:hover { background:#555; }
+.actions { text-align:center; margin-top:20px; }
 </style>
 </head>
 <body>
-<h1>Your Cart 🛒</h1>
+<header>
+  <div class="logo">Nil d’Oro</div>
+  <h1>Your Cart 🛒</h1>
+</header>
 
 <?php if($cart): ?>
-<table>
-<tr>
-    <th>Image</th>
-    <th>Name</th>
-    <th>Price</th>
-    <th>Quantity</th>
-    <th>Subtotal</th>
-    <th>Action</th>
-</tr>
-<?php $total = 0; ?>
-<?php foreach($cart as $id => $item): ?>
-<tr>
-    <td><img src="<?= $item['image'] ?>" alt="<?= $item['name'] ?>"></td>
-    <td><?= $item['name'] ?></td>
-    <td><?= $item['price'] ?> EGP</td>
-    <td><?= $item['quantity'] ?></td>
-    <td><?= $item['price'] * $item['quantity'] ?> EGP</td>
-    <td>
-        <a href="cart.php?remove=<?= $id ?>" class="btn btn-remove">Remove</a>
-    </td>
-</tr>
-<?php $total += $item['price'] * $item['quantity']; ?>
-<?php endforeach; ?>
-<tr>
-    <td colspan="4"><strong>Total</strong></td>
-    <td colspan="2"><strong><?= $total ?> EGP</strong></td>
-</tr>
-</table>
-
-<a href="checkout.php">Proceed to Checkout</a>
-
+<form method="post">
+  <table>
+    <tr>
+      <th>Product</th>
+      <th>Price (EGP)</th>
+      <th>Quantity</th>
+      <th>Subtotal</th>
+    </tr>
+    <?php $total=0; foreach($cart as $id => $item): 
+        $subtotal = $item['price'] * $item['quantity'];
+        $total += $subtotal;
+    ?>
+    <tr>
+      <td><?= htmlspecialchars($item['name']) ?></td>
+      <td><?= $item['price'] ?></td>
+      <td><input type="number" name="quantities[<?= $id ?>]" value="<?= $item['quantity'] ?>"></td>
+      <td><?= $subtotal ?></td>
+    </tr>
+    <?php endforeach; ?>
+    <tr>
+      <td colspan="3"><strong>Total</strong></td>
+      <td><strong><?= $total ?> EGP</strong></td>
+    </tr>
+  </table>
+  <div class="actions">
+    <button type="submit" name="update_quantity">Update Cart</button>
+    <a href="checkout.php"><button type="button">Proceed to Checkout</button></a>
+  </div>
+</form>
 <?php else: ?>
-<p>Your cart is empty.</p>
+  <p style="text-align:center;">Your cart is empty.</p>
 <?php endif; ?>
 </body>
 </html>
