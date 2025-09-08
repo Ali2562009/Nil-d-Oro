@@ -156,5 +156,6 @@ pre { background: #fafafa; padding: 10px; border-radius: 5px; }
 <?php else: ?>
 <p>No orders found.</p>
 <?php endif; ?>
+
 </body>
 </html>
