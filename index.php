@@ -1,62 +1,49 @@
-<?php
-session_start();
-?>
+<?php session_start(); ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Nil d’Oro - Home</title>
-<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
-<style>
-body { margin:0; font-family:'Times New Roman', serif; background:#f9f5ec; color:#333; }
-.header { background:#2e2e2e; padding:15px; display:flex; justify-content:space-between; align-items:center; }
-.logo { font-family:'Great Vibes', cursive; font-size:48px; color:#f5e6cc; }
-.nav a { color:#f5e6cc; margin:0 12px; text-decoration:none; font-size:18px; }
-.nav a:hover { text-decoration:underline; }
-.hero { background:url('images/hero-bg.jpg') center/cover no-repeat; height:80vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; color:#fff; }
-.hero h1 { font-family:'Great Vibes', cursive; font-size:64px; margin:0; }
-.hero p { font-size:22px; margin:15px 0; }
-.hero a { background:#bfa76f; color:#fff; padding:14px 28px; border-radius:10px; font-size:20px; text-decoration:none; }
-.hero a:hover { background:#a18f59; }
-.container { max-width:1000px; margin:50px auto; padding:20px; text-align:center; }
-.container h2 { font-family:'Great Vibes', cursive; font-size:42px; margin-bottom:20px; }
-.container p { font-size:18px; line-height:1.6; }
-.footer { background:#2e2e2e; text-align:center; padding:15px; color:#f5e6cc; margin-top:40px; }
-</style>
+  <meta charset="UTF-8">
+  <title>Nil d’Oro | Home</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Tangerine:wght@700&display=swap" rel="stylesheet">
+  <style>
+    header { text-align:center; padding:20px; }
+    h1 { font-family:'Tangerine', cursive; font-size:4rem; color:#2c2c2c; }
+    nav a { margin:0 10px; text-decoration:none; color:#444; font-weight:bold; }
+    .hero {
+      text-align:center; padding:60px 20px;
+      background: linear-gradient(to right, #f2e9e4, #fff);
+    }
+    .hero h2 { font-size:2.5rem; margin-bottom:10px; }
+    .hero p { font-size:1.2rem; color:#555; }
+    .cta-btn {
+      display:inline-block; margin-top:20px; padding:12px 25px;
+      background:#c19a6b; color:#fff; border-radius:30px;
+      text-decoration:none; font-weight:bold; transition:0.3s;
+    }
+    .cta-btn:hover { background:#a67842; }
+    footer { text-align:center; padding:20px; margin-top:40px; color:#777; font-size:0.9rem; }
+  </style>
 </head>
 <body>
-  <div class="header">
-    <div class="logo">Nil d’Oro</div>
-    <div class="nav">
-      <a href="index.php">Home</a>
-      <a href="products.php">Products</a>
-      <a href="cart.php">Cart</a>
-      <?php if (isset($_SESSION['user'])): ?>
-        <a href="logout.php">Logout</a>
-      <?php else: ?>
-        <a href="login.php">Login</a>
-      <?php endif; ?>
-    </div>
-  </div>
-
-  <div class="hero">
+  <header>
     <h1>Nil d’Oro</h1>
-    <p>Timeless classics — from elegant watches to refined accessories</p>
-    <a href="products.php">Shop Now</a>
-  </div>
+    <nav>
+      <a href="index.php">Home</a> |
+      <a href="products.php">Products</a> |
+      <a href="contact.php">Contact</a> |
+      <a href="cart.php">🛒 Cart (<?php echo isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0; ?>)</a>
+    </nav>
+  </header>
 
-  <div class="container">
+  <section class="hero">
     <h2>Welcome to Nil d’Oro</h2>
-    <p>
-      Inspired by Egypt’s timeless elegance and the Victorian era’s artistry,  
-      Nil d’Oro brings you a curated selection of accessories, watches,  
-      and classic essentials that never go out of style.  
-      Every piece reflects sophistication, heritage, and craftsmanship.
-    </p>
-  </div>
+    <p>Classic accessories, timeless watches, and elegant school & office supplies.</p>
+    <a href="products.php" class="cta-btn">Shop Now</a>
+  </section>
 
-  <div class="footer">
-    <p>© <?= date('Y') ?> Nil d’Oro — All Rights Reserved</p>
-  </div>
+  <footer>
+    <p>© <?php echo date("Y"); ?> Nil d’Oro. All Rights Reserved.</p>
+  </footer>
 </body>
 </html>
