@@ -5,6 +5,10 @@ if (!isset($_SESSION['admin'])) {
     exit();
 }
 ?>
+<?php if ($role === 'super') { ?>
+   <li><a href="register_admin.php">Add New Admin</a></li>
+<?php } ?>
+
 <h1>Welcome, <?php echo $_SESSION['admin']; ?>
 <?php
 $stmt = $conn->prepare("SELECT role FROM admins WHERE username=?");
