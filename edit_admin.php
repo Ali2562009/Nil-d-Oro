@@ -4,7 +4,9 @@ if (!isset($_SESSION['admin'])) {
     header("Location: admin_login.php");
     exit();
 }
-
+if ($admin['role'] === 'super') {
+    echo "❌ Cannot edit Super Admin!";
+    exit();
 include 'db.php';
 include 'log_action.php';
 
