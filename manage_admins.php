@@ -51,9 +51,16 @@ include 'db.php';
                 <td>{$row['id']}</td>
                 <td>{$row['username']}</td>
                 <td>
-                  <a href='edit_admin.php?id={$row['id']}' class='btn edit'>✏️ Edit</a>
-                  <a href='delete_admin.php?id={$row['id']}' class='btn delete' onclick=\"return confirm('Are you sure you want to delete this admin?');\">🗑️ Delete</a>
-                </td>
+                  <a href='edit_admin.php?id={$row['id']}' class='btn edit'>✏️ Edit</a>";
+        
+        // Prevent deleting self
+        if ($row['username'] !== $_SESSION['admin']) {
+            echo "<a href='delete_admin.php?id={$row['id']}' class='btn delete' onclick=\"return confirm('Are you sure you want to delete this admin?');\">🗑️ Delete</a>";
+        } else {
+            echo "<span style='color: gray;'>❌ Cannot delete yourself</span>";
+        }
+
+        echo "</td>
               </tr>";
     }
     ?>
