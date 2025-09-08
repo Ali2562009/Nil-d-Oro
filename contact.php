@@ -43,6 +43,16 @@
 
   <div class="contact-container">
     <h2>Contact Us</h2>
+
+    <!-- ✅ Success/Error Messages -->
+    <?php if (isset($_SESSION['success'])) { ?>
+      <p style="color:green; font-weight:bold;"><?php echo $_SESSION['success']; unset($_SESSION['success']); ?></p>
+    <?php } ?>
+    <?php if (isset($_SESSION['error'])) { ?>
+      <p style="color:red; font-weight:bold;"><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></p>
+    <?php } ?>
+
+    <!-- 📩 Contact Form -->
     <form method="POST" action="send_message.php">
       <label for="name">Your Name</label>
       <input type="text" id="name" name="name" required>
