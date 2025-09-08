@@ -6,6 +6,31 @@ if (!isset($_SESSION['admin'])) {
 }
 include 'db.php';
 ?>
+<?php
+session_start();
+include 'db.php';
+
+// Check if user is logged in
+if (!isset($_SESSION['admin'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Fetch user role
+$stmt = $conn->prepare("SELECT role FROM admins WHERE username=?");
+$stmt->bind_param("s", $_SESSION['admin']);
+$stmt->execute();
+$stmt->bind_result($role);
+$stmt->fetch();
+$stmt->close();
+
+// Only allow super admin
+if ($role !== 'super') {
+    echo "<h2 style='color:red;text-align:center;'>🚫 Access Denied</h2>";
+    exit();
+}
+?>
+
 <td>
   <?php 
     echo $row['actor']; 
