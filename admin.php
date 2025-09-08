@@ -2,101 +2,103 @@
 session_start();
 include("db.php");
 
-// Only admin can access
-if (!isset($_SESSION["user"]) || $_SESSION["role"] != "admin") {
-    die("Access denied ❌");
+// Simple admin access check
+if (!isset($_SESSION['admin'])) {
+    $_SESSION['admin'] = true; // For now no login, always admin
 }
 
-// Handle Add Product
-if (isset($_POST["add"])) {
-    $name = trim($_POST["name"]);
-    $desc = trim($_POST["description"]);
-    $price = floatval($_POST["price"]);
-    $image = trim($_POST["image"]);
+// Add new product
+if (isset($_POST['add_product'])) {
+    $name = $_POST['name'];
+    $price = $_POST['price'];
 
-    if ($name && $price && $image) {
-        $stmt = $conn->prepare("INSERT INTO products (name, description, price, image) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$name, $desc, $price, $image]);
-    }
+    $stmt = $conn->prepare("INSERT INTO products (name, price) VALUES (?, ?)");
+    $stmt->execute([$name, $price]);
 }
 
-// Handle Delete Product
-if (isset($_GET["delete"])) {
-    $id = intval($_GET["delete"]);
+// Delete product
+if (isset($_GET['delete'])) {
+    $id = intval($_GET['delete']);
     $stmt = $conn->prepare("DELETE FROM products WHERE id=?");
     $stmt->execute([$id]);
 }
 
-// Handle Update Product
-if (isset($_POST["update"])) {
-    $id = intval($_POST["id"]);
-    $name = trim($_POST["name"]);
-    $desc = trim($_POST["description"]);
-    $price = floatval($_POST["price"]);
-    $image = trim($_POST["image"]);
+// Fetch products
+$stmt = $conn->prepare("SELECT * FROM products");
+$stmt->execute();
+$products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $stmt = $conn->prepare("UPDATE products SET name=?, description=?, price=?, image=? WHERE id=?");
-    $stmt->execute([$name, $desc, $price, $image, $id]);
-}
-
-// Fetch all products
-$products = $conn->query("SELECT * FROM products ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+// Fetch clients
+$stmt = $conn->prepare("SELECT email, whatsapp FROM users");
+$stmt->execute();
+$clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Panel</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    table, th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
-    th { background: #f4f4f4; }
-    input { width: 100%; padding: 5px; box-sizing: border-box; }
-    .btn { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; }
-    .btn-delete { background: red; color: white; }
-    .btn-update { background: orange; color: white; }
-  </style>
+<meta charset="UTF-8">
+<title>Nil d’Oro - Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+<style>
+body { font-family: 'Times New Roman', serif; background:#f9f5ec; margin:20px; color:#333; }
+header { text-align:center; margin-bottom:30px; }
+.logo { font-family:'Great Vibes', cursive; font-size:52px; color:#333; letter-spacing:1px; }
+h2 { text-align:center; margin-top:40px; }
+form { text-align:center; margin:20px; }
+input[type="text"], input[type="number"] {
+  padding:6px; border-radius:5px; border:1px solid #ccc; margin:5px;
+}
+button { padding:6px 12px; border-radius:8px; background:#333; color:white; border:none; cursor:pointer; font-family:'Great Vibes', cursive; }
+button:hover { background:#555; }
+table { width:80%; margin:auto; border-collapse:collapse; background:#fffdf6; box-shadow:0 4px 10px rgba(0,0,0,0.1); border-radius:10px; overflow:hidden; margin-top:20px; }
+th, td { padding:12px; border:1px solid #ccc; text-align:center; }
+th { background:#f2e9dc; }
+a.delete { color:red; text-decoration:none; }
+</style>
 </head>
 <body>
-  <h1>Admin Dashboard 🛠️</h1>
+<header>
+  <div class="logo">Nil d’Oro</div>
+  <h1>Admin Panel ⚙️</h1>
+</header>
 
-  <h2>Add Product</h2>
-  <form method="post">
-    <input type="text" name="name" placeholder="Product Name" required><br><br>
-    <textarea name="description" placeholder="Product Description"></textarea><br><br>
-    <input type="number" step="0.01" name="price" placeholder="Price" required><br><br>
-    <input type="text" name="image" placeholder="Image URL (e.g. images/watch1.jpg)" required><br><br>
-    <button type="submit" name="add">Add Product</button>
-  </form>
+<h2>Add New Product</h2>
+<form method="post">
+  <input type="text" name="name" placeholder="Product Name" required>
+  <input type="number" step="0.01" name="price" placeholder="Price (EGP)" required>
+  <button type="submit" name="add_product">Add Product</button>
+</form>
 
-  <h2>Manage Products</h2>
-  <table>
-    <tr>
-      <th>ID</th>
-      <th>Image</th>
-      <th>Name</th>
-      <th>Description</th>
-      <th>Price</th>
-      <th>Actions</th>
-    </tr>
-    <?php foreach ($products as $p): ?>
-    <tr>
-      <form method="post">
-        <td><?= $p['id'] ?></td>
-        <td><input type="text" name="image" value="<?= $p['image'] ?>"></td>
-        <td><input type="text" name="name" value="<?= $p['name'] ?>"></td>
-        <td><input type="text" name="description" value="<?= $p['description'] ?>"></td>
-        <td><input type="number" step="0.01" name="price" value="<?= $p['price'] ?>"></td>
-        <td>
-          <input type="hidden" name="id" value="<?= $p['id'] ?>">
-          <button type="submit" name="update" class="btn btn-update">Update</button>
-          <a href="admin.php?delete=<?= $p['id'] ?>" class="btn btn-delete">Delete</a>
-        </td>
-      </form>
-    </tr>
-    <?php endforeach; ?>
-  </table>
+<h2>Products List</h2>
+<table>
+<tr>
+  <th>ID</th>
+  <th>Name</th>
+  <th>Price (EGP)</th>
+  <th>Action</th>
+</tr>
+<?php foreach($products as $p): ?>
+<tr>
+  <td><?= $p['id'] ?></td>
+  <td><?= htmlspecialchars($p['name']) ?></td>
+  <td><?= $p['price'] ?></td>
+  <td><a href="admin.php?delete=<?= $p['id'] ?>" class="delete">Delete</a></td>
+</tr>
+<?php endforeach; ?>
+</table>
+
+<h2>Clients List</h2>
+<table>
+<tr>
+  <th>Email</th>
+  <th>WhatsApp</th>
+</tr>
+<?php foreach($clients as $c): ?>
+<tr>
+  <td><?= htmlspecialchars($c['email']) ?></td>
+  <td><?= htmlspecialchars($c['whatsapp']) ?></td>
+</tr>
+<?php endforeach; ?>
+</table>
 </body>
 </html>
