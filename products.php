@@ -27,7 +27,11 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body>
   <h1>Our Classic Collection</h1>
-  
+  <form method="post">
+    <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
+    <button type="submit" name="add_to_cart" class="add-to-cart">Add to Cart</button>
+</form>
+
   <div class="products">
     <?php if ($products): ?>
       <?php foreach ($products as $p): ?>
