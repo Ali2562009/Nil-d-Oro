@@ -19,6 +19,12 @@ if (isset($_GET['id'])) {
     $stmt->fetch();
     $stmt->close();
 
+    // Prevent deleting yourself
+    if ($username === $_SESSION['admin']) {
+        echo "❌ You cannot delete your own account!";
+        exit();
+    }
+
     // Delete admin
     $stmt = $conn->prepare("DELETE FROM admins WHERE id=?");
     $stmt->bind_param("i", $id);
