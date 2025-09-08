@@ -62,6 +62,7 @@ th {
 </style>
 </head>
 <body>
+    <a href="logout.php" style="float:right; margin:10px; padding:8px 15px; background:#3a2e2e; color:#fff; border-radius:8px; text-decoration:none;">Logout</a>
     <h1>Nil d’Oro — Admin Dashboard</h1>
 
     <table>
