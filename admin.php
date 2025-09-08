@@ -1,122 +1,90 @@
 <?php
 session_start();
-include("db.php");
+include 'db.php';
 
-// Simple admin access check
-if (!isset($_SESSION['admin'])) {
-    $_SESSION['admin'] = true; // For now no login, always admin
+// Simple admin protection (you can expand this later)
+$isAdmin = true; // set after login in real case
+if (!$isAdmin) {
+    die("Access denied.");
 }
 
-// Add new product
-if (isset($_POST['add_product'])) {
-    $name = $_POST['name'];
-    $price = $_POST['price'];
-
-    $stmt = $conn->prepare("INSERT INTO products (name, price) VALUES (?, ?)");
-    $stmt->execute([$name, $price]);
-}
-
-// Delete product
-if (isset($_GET['delete'])) {
-    $id = intval($_GET['delete']);
-    $stmt = $conn->prepare("DELETE FROM products WHERE id=?");
-    $stmt->execute([$id]);
-}
-
-// Fetch products
-$stmt = $conn->prepare("SELECT * FROM products");
-$stmt->execute();
-$products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Fetch clients
-$stmt = $conn->prepare("SELECT email, whatsapp FROM users");
-$stmt->execute();
-$clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$result = $conn->query("SELECT * FROM orders ORDER BY created_at DESC");
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Nil d’Oro - Admin Panel</title>
+<title>Nil d’Oro - Admin Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 <style>
-body { font-family: 'Times New Roman', serif; background:#f9f5ec; margin:20px; color:#333; }
-header { text-align:center; margin-bottom:30px; }
-.logo { font-family:'Great Vibes', cursive; font-size:52px; color:#333; letter-spacing:1px; }
-h2 { text-align:center; margin-top:40px; }
-form { text-align:center; margin:20px; }
-input[type="text"], input[type="number"] {
-  padding:6px; border-radius:5px; border:1px solid #ccc; margin:5px;
+body {
+    font-family: "Great Vibes", cursive;
+    background: #fdf6f0;
+    color: #3a2e2e;
+    padding: 20px;
+    text-align: center;
 }
-button { padding:6px 12px; border-radius:8px; background:#333; color:white; border:none; cursor:pointer; font-family:'Great Vibes', cursive; }
-button:hover { background:#555; }
-table { width:80%; margin:auto; border-collapse:collapse; background:#fffdf6; box-shadow:0 4px 10px rgba(0,0,0,0.1); border-radius:10px; overflow:hidden; margin-top:20px; }
-th, td { padding:12px; border:1px solid #ccc; text-align:center; }
-th { background:#f2e9dc; }
-a.delete { color:red; text-decoration:none; }
+h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+table {
+    width: 90%;
+    margin: auto;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
+}
+th, td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    font-family: serif;
+}
+th {
+    background: #3a2e2e;
+    color: #fff;
+}
+.order-products {
+    font-size: 14px;
+    text-align: left;
+}
 </style>
 </head>
 <body>
-<header>
-  <div class="logo">Nil d’Oro</div>
-  <h1>Admin Panel ⚙️</h1>
-</header>
-<nav>
-  <ul>
-    <li><a href="products.php">Products</a></li>
-    <li><a href="cart.php">Cart</a></li>
-    <li><a href="checkout.php">Checkout</a></li>
-    <li><a href="admin.php">Admin</a></li>
-    <li><a href="logout.php">Logout</a></li>
-  </ul>
-</nav>
+    <h1>Nil d’Oro — Admin Dashboard</h1>
 
-<style>
-nav { background:#333; padding:10px 0; margin-bottom:20px; }
-nav ul { list-style:none; display:flex; justify-content:center; margin:0; padding:0; }
-nav li { margin:0 15px; }
-nav a { color:white; text-decoration:none; font-family:'Great Vibes', cursive; font-size:22px; }
-nav a:hover { text-decoration:underline; }
-</style>
-
-
-<h2>Add New Product</h2>
-<form method="post">
-  <input type="text" name="name" placeholder="Product Name" required>
-  <input type="number" step="0.01" name="price" placeholder="Price (EGP)" required>
-  <button type="submit" name="add_product">Add Product</button>
-</form>
-
-<h2>Products List</h2>
-<table>
-<tr>
-  <th>ID</th>
-  <th>Name</th>
-  <th>Price (EGP)</th>
-  <th>Action</th>
-</tr>
-<?php foreach($products as $p): ?>
-<tr>
-  <td><?= $p['id'] ?></td>
-  <td><?= htmlspecialchars($p['name']) ?></td>
-  <td><?= $p['price'] ?></td>
-  <td><a href="admin.php?delete=<?= $p['id'] ?>" class="delete">Delete</a></td>
-</tr>
-<?php endforeach; ?>
-</table>
-
-<h2>Clients List</h2>
-<table>
-<tr>
-  <th>Email</th>
-  <th>WhatsApp</th>
-</tr>
-<?php foreach($clients as $c): ?>
-<tr>
-  <td><?= htmlspecialchars($c['email']) ?></td>
-  <td><?= htmlspecialchars($c['whatsapp']) ?></td>
-</tr>
-<?php endforeach; ?>
-</table>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Client</th>
+            <th>Email</th>
+            <th>WhatsApp</th>
+            <th>Address</th>
+            <th>Products</th>
+            <th>Total (EGP)</th>
+            <th>Date</th>
+        </tr>
+        <?php while ($row = $result->fetch_assoc()): ?>
+        <tr>
+            <td><?= $row['id'] ?></td>
+            <td><?= htmlspecialchars($row['name']) ?></td>
+            <td><?= htmlspecialchars($row['email']) ?></td>
+            <td><?= htmlspecialchars($row['whatsapp']) ?></td>
+            <td><?= htmlspecialchars($row['address']) ?></td>
+            <td class="order-products">
+                <?php
+                $items = json_decode($row['order_data'], true);
+                foreach ($items as $item => $details) {
+                    echo htmlspecialchars($item) . " (" . $details['quantity'] . " × " . $details['price'] . " EGP)<br>";
+                }
+                ?>
+            </td>
+            <td><?= number_format($row['total'], 2) ?></td>
+            <td><?= $row['created_at'] ?></td>
+        </tr>
+        <?php endwhile; ?>
+    </table>
 </body>
 </html>
