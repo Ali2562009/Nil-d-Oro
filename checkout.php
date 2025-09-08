@@ -34,48 +34,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $cart) {
 }
 ?>
 
-<form method="post">
-    <input type="text" name="name" placeholder="Your Name" required>
-    <input type="email" name="email" placeholder="Email" required>
-    <input type="text" name="phone" placeholder="Phone Number" required>
-    <input type="text" name="whatsapp" placeholder="WhatsApp Number" required> <!-- New -->
-    ...
-</form>
-<?php
-session_start();
-include("db.php");
-
-$cart = $_SESSION['cart'] ?? [];
-$msg = "";
-
-if (!$cart) {
-    $msg = "Your cart is empty!";
-}
-
-if ($_SERVER["REQUEST_METHOD"] === "POST" && $cart) {
-    $name = trim($_POST['name']);
-    $email = trim($_POST['email']);
-    $phone = trim($_POST['phone']);
-
-    $total = 0;
-    $details = [];
-
-    foreach($cart as $id => $item) {
-        $subtotal = $item['price'] * $item['quantity'];
-        $total += $subtotal;
-        $details[] = $item['name'] . " x" . $item['quantity'] . " = " . $subtotal . " EGP";
-    }
-
-    $orderDetails = implode("\n", $details);
-
-    $stmt = $conn->prepare("INSERT INTO orders (customer_name, customer_email, customer_phone, total, order_details) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([$name, $email, $phone, $total, $orderDetails]);
-
-    $_SESSION['cart'] = []; // Clear cart
-    $msg = "✅ Your order has been placed successfully! Total: $total EGP";
-}
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,6 +57,7 @@ button:hover { background: #555; }
     <input type="text" name="name" placeholder="Your Name" required>
     <input type="email" name="email" placeholder="Email" required>
     <input type="text" name="phone" placeholder="Phone Number" required>
+    <input type="text" name="whatsapp" placeholder="WhatsApp Number" required> <!-- New field -->
 
     <h3>Order Summary:</h3>
     <ul>
