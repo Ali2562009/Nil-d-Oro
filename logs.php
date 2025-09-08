@@ -30,10 +30,7 @@ if ($role !== 'super') {
     echo "<h2 style='color:red;text-align:center;'>🚫 Access Denied</h2>";
     exit();
 }
-?>
-<?php if ($role === 'super') { ?>
-  <li><a href="logs.php">View Logs</a></li>
-<?php } ?>
+
 <td>
   <?php 
     echo $row['actor']; 
