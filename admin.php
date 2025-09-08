@@ -15,6 +15,10 @@ $stmt->fetch();
 $stmt->close();
 if ($role === 'super') { echo " <span style='color:gold;'>👑 Super Admin</span>"; }
 ?>
+?>
+<?php if ($role === 'super') { ?>
+  <li><a href="logs.php">View Logs</a></li>
+<?php } ?>
 </h1>
 <!DOCTYPE html>
 <html lang="en">
