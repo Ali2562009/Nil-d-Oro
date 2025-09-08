@@ -18,6 +18,23 @@ if (isset($_GET['delete'])) {
     exit();
 }
 
+// ✅ Handle Export CSV
+if (isset($_GET['export']) && $_GET['export'] == "csv") {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename=messages.csv');
+    $output = fopen("php://output", "w");
+
+    // Column headers
+    fputcsv($output, ['ID', 'Name', 'Email', 'WhatsApp', 'Message', 'Received At']);
+
+    $res = $conn->query("SELECT * FROM messages ORDER BY created_at DESC");
+    while ($row = $res->fetch_assoc()) {
+        fputcsv($output, $row);
+    }
+    fclose($output);
+    exit();
+}
+
 $result = $conn->query("SELECT * FROM messages ORDER BY created_at DESC");
 ?>
 <!DOCTYPE html>
@@ -28,20 +45,31 @@ $result = $conn->query("SELECT * FROM messages ORDER BY created_at DESC");
   <style>
     body { font-family:Arial, sans-serif; margin:20px; }
     h1 { text-align:center; }
+    .actions { text-align:center; margin-bottom:20px; }
     table { width:100%; border-collapse:collapse; margin-top:20px; }
     th, td { border:1px solid #ddd; padding:10px; text-align:left; }
     th { background:#f4f4f4; }
     tr:nth-child(even) { background:#fafafa; }
     .whatsapp-link { color:green; font-weight:bold; }
     .email-link { color:blue; font-weight:bold; }
-    .delete-btn {
-      color:red; font-weight:bold; text-decoration:none;
-    }
+    .delete-btn { color:red; font-weight:bold; text-decoration:none; }
     .delete-btn:hover { text-decoration:underline; }
+    .export-btn {
+      display:inline-block; padding:10px 15px;
+      background:darkblue; color:white;
+      border-radius:5px; text-decoration:none;
+      font-weight:bold;
+    }
+    .export-btn:hover { background:blue; }
   </style>
 </head>
 <body>
   <h1>📨 Client Messages</h1>
+
+  <div class="actions">
+    <a href="admin_messages.php?export=csv" class="export-btn">⬇️ Export to CSV</a>
+  </div>
+
   <table>
     <tr>
       <th>ID</th>
