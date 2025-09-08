@@ -1,21 +1,17 @@
 <?php
 session_start();
-include("db.php"); // Include your database connection
+include("db.php"); // Your database connection
 
 $cart = $_SESSION['cart'] ?? [];
 $msg = "";
 
-// Check if cart is empty
-if (!$cart) {
-    $msg = "Your cart is empty!";
-}
+if (!$cart) { $msg = "Your cart is empty!"; }
 
-// Handle form submission
 if ($_SERVER["REQUEST_METHOD"] === "POST" && $cart) {
     $name = trim($_POST['name']);
     $email = trim($_POST['email']);
     $phone = trim($_POST['phone']);
-    $whatsapp = trim($_POST['whatsapp']); // New field
+    $whatsapp = trim($_POST['whatsapp']);
 
     $total = 0;
     $details = [];
@@ -32,7 +28,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $cart) {
     $stmt = $conn->prepare("INSERT INTO orders (customer_name, customer_email, customer_phone, whatsapp, total, order_details) VALUES (?, ?, ?, ?, ?, ?)");
     $stmt->execute([$name, $email, $phone, $whatsapp, $total, $orderDetails]);
 
-    // Clear cart after successful order
     $_SESSION['cart'] = [];
     $msg = "✅ Your order has been placed successfully! Total: $total EGP";
 }
@@ -42,27 +37,86 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $cart) {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Checkout</title>
-<link rel="stylesheet" href="style.css">
+<title>Nil d’Oro - Checkout</title>
+
+<!-- Victorian Handwriting Font -->
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+
 <style>
-body { font-family: Arial, sans-serif; margin: 20px; }
-form { max-width: 400px; margin: auto; display: flex; flex-direction: column; gap: 10px; }
-input, textarea { padding: 8px; width: 100%; box-sizing: border-box; }
-button { padding: 10px; background: #333; color: white; border: none; cursor: pointer; border-radius: 5px; }
+body { 
+    font-family: 'Times New Roman', serif; 
+    background-color: #f9f5ec; 
+    margin: 20px; 
+    color: #333;
+}
+header { text-align: center; margin-bottom: 30px; }
+.logo { 
+    font-family: 'Great Vibes', cursive; 
+    font-size: 52px; 
+    color: #333; 
+    letter-spacing: 1px;
+}
+h1, h3, p, li, label { font-family: 'Great Vibes', cursive; }
+form { 
+    max-width: 450px; 
+    margin: auto; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 12px; 
+    background: #fffdf6;
+    padding: 20px; 
+    border-radius: 10px; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+input, textarea { 
+    padding: 10px; 
+    width: 100%; 
+    box-sizing: border-box; 
+    border: 1px solid #ccc; 
+    border-radius: 5px; 
+    font-family: 'Times New Roman', serif;
+}
+button { 
+    padding: 12px; 
+    background: #333; 
+    color: white; 
+    border: none; 
+    cursor: pointer; 
+    border-radius: 8px; 
+    font-family: 'Great Vibes', cursive;
+}
 button:hover { background: #555; }
-ul { padding-left: 20px; }
+ul { 
+    padding-left: 20px; 
+    background: #fff8e0; 
+    border-radius: 5px; 
+    padding: 10px; 
+}
+p.msg { color: green; font-weight: bold; text-align: center; }
 </style>
 </head>
 <body>
-<h1>Checkout 🛒</h1>
-<p style="color: green;"><?= $msg ?></p>
+
+<header>
+    <div class="logo">Nil d’Oro</div>
+    <h1>Checkout 🛒</h1>
+</header>
+
+<p class="msg"><?= $msg ?></p>
 
 <?php if($cart): ?>
 <form method="post">
+    <label>Your Name</label>
     <input type="text" name="name" placeholder="Your Name" required>
+    
+    <label>Email</label>
     <input type="email" name="email" placeholder="Email" required>
+    
+    <label>Phone Number</label>
     <input type="text" name="phone" placeholder="Phone Number" required>
-    <input type="text" name="whatsapp" placeholder="WhatsApp Number" required> <!-- New field -->
+    
+    <label>WhatsApp Number</label>
+    <input type="text" name="whatsapp" placeholder="WhatsApp Number" required>
 
     <h3>Order Summary:</h3>
     <ul>
@@ -77,7 +131,8 @@ ul { padding-left: 20px; }
     <button type="submit">Place Order</button>
 </form>
 <?php else: ?>
-<p>Your cart is empty.</p>
+<p style="text-align:center;">Your cart is empty.</p>
 <?php endif; ?>
+
 </body>
 </html>
