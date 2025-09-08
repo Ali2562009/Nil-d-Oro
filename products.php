@@ -1,16 +1,10 @@
 <?php
 session_start();
+include("db.php");
 
-// If you want products from database later, connect here
-// include("db.php");
-
-// Example products (for now hard-coded)
-$products = [
-    ["name" => "Classic Leather Watch", "price" => 750, "desc" => "Elegant brown leather strap.", "img" => "images/watch1.jpg"],
-    ["name" => "Silver Bracelet", "price" => 250, "desc" => "Minimalist and timeless design.", "img" => "images/bracelet1.jpg"],
-    ["name" => "Notebook (Vintage)", "price" => 80, "desc" => "Classic school supply with retro design.", "img" => "images/notebook1.jpg"],
-    ["name" => "Fountain Pen", "price" => 150, "desc" => "Smooth writing, classic touch.", "img" => "images/pen1.jpg"],
-];
+// Fetch products from DB
+$stmt = $conn->query("SELECT * FROM products ORDER BY created_at DESC");
+$products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -35,15 +29,19 @@ $products = [
   <h1>Our Classic Collection</h1>
   
   <div class="products">
-    <?php foreach ($products as $p): ?>
-      <div class="product">
-        <img src="<?php echo $p['img']; ?>" alt="<?php echo $p['name']; ?>">
-        <h3><?php echo $p['name']; ?></h3>
-        <p><?php echo $p['desc']; ?></p>
-        <span>Price: <?php echo $p['price']; ?> EGP</span>
-        <button class="add-to-cart">Add to Cart</button>
-      </div>
-    <?php endforeach; ?>
+    <?php if ($products): ?>
+      <?php foreach ($products as $p): ?>
+        <div class="product">
+          <img src="<?php echo $p['image']; ?>" alt="<?php echo $p['name']; ?>">
+          <h3><?php echo $p['name']; ?></h3>
+          <p><?php echo $p['description']; ?></p>
+          <span>Price: <?php echo $p['price']; ?> EGP</span>
+          <button class="add-to-cart">Add to Cart</button>
+        </div>
+      <?php endforeach; ?>
+    <?php else: ?>
+      <p>No products available yet.</p>
+    <?php endif; ?>
   </div>
 </body>
 </html>
