@@ -8,6 +8,28 @@ if (!isset($_SESSION['admin'])) {
     exit();
 }
 
+// Prevent deleting yourself
+$current_admin = $_SESSION['admin'];
+
+// Handle delete action
+if (isset($_GET['delete'])) {
+    $id = intval($_GET['delete']);
+    $stmt = $conn->prepare("SELECT username FROM admins WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $admin = $result->fetch_assoc();
+
+    if ($admin && $admin['username'] !== $current_admin) {
+        $del = $conn->prepare("DELETE FROM admins WHERE id = ?");
+        $del->bind_param("i", $id);
+        $del->execute();
+        $message = "✅ Admin deleted successfully.";
+    } else {
+        $message = "❌ You cannot delete yourself!";
+    }
+}
+
 // Fetch all admins
 $result = $conn->query("SELECT id, username FROM admins ORDER BY id ASC");
 ?>
@@ -36,7 +58,7 @@ $result = $conn->query("SELECT id, username FROM admins ORDER BY id ASC");
     table {
       margin: 30px auto;
       border-collapse: collapse;
-      width: 60%;
+      width: 70%;
       background: white;
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
@@ -64,23 +86,39 @@ $result = $conn->query("SELECT id, username FROM admins ORDER BY id ASC");
     a:hover {
       color: gold;
     }
+
+    .message {
+      margin: 20px;
+      font-weight: bold;
+      color: green;
+    }
   </style>
 </head>
 <body>
   <header>
     <h1>Nil d’Oro - Admins List</h1>
-    <p>Welcome, <strong><?php echo $_SESSION['admin']; ?></strong></p>
+    <p>Welcome, <strong><?php echo $current_admin; ?></strong></p>
   </header>
+
+  <?php if (isset($message)) echo "<p class='message'>$message</p>"; ?>
 
   <table>
     <tr>
       <th>ID</th>
       <th>Username</th>
+      <th>Action</th>
     </tr>
     <?php while ($row = $result->fetch_assoc()): ?>
     <tr>
       <td><?php echo $row['id']; ?></td>
       <td><?php echo htmlspecialchars($row['username']); ?></td>
+      <td>
+        <?php if ($row['username'] !== $current_admin): ?>
+          <a href="list_admins.php?delete=<?php echo $row['id']; ?>" onclick="return confirm('Are you sure you want to delete this admin?');">❌ Delete</a>
+        <?php else: ?>
+          (You)
+        <?php endif; ?>
+      </td>
     </tr>
     <?php endwhile; ?>
   </table>
