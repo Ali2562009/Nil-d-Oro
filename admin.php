@@ -61,6 +61,24 @@ a.delete { color:red; text-decoration:none; }
   <div class="logo">Nil d’Oro</div>
   <h1>Admin Panel ⚙️</h1>
 </header>
+<nav>
+  <ul>
+    <li><a href="products.php">Products</a></li>
+    <li><a href="cart.php">Cart</a></li>
+    <li><a href="checkout.php">Checkout</a></li>
+    <li><a href="admin.php">Admin</a></li>
+    <li><a href="logout.php">Logout</a></li>
+  </ul>
+</nav>
+
+<style>
+nav { background:#333; padding:10px 0; margin-bottom:20px; }
+nav ul { list-style:none; display:flex; justify-content:center; margin:0; padding:0; }
+nav li { margin:0 15px; }
+nav a { color:white; text-decoration:none; font-family:'Great Vibes', cursive; font-size:22px; }
+nav a:hover { text-decoration:underline; }
+</style>
+
 
 <h2>Add New Product</h2>
 <form method="post">
