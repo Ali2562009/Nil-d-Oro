@@ -28,6 +28,10 @@ if (isset($_GET['id'])) {
     // Delete admin
     $stmt = $conn->prepare("DELETE FROM admins WHERE id=?");
     $stmt->bind_param("i", $id);
+if ($username === $_SESSION['admin'] || $row['role'] === 'super') {
+    echo "❌ Cannot delete a Super Admin!";
+    exit();
+}
 
     if ($stmt->execute()) {
         logAction($conn, $_SESSION['admin'], "Delete", $username);
