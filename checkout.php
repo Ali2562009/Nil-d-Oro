@@ -1,14 +1,16 @@
 <?php
 session_start();
-include("db.php");
+include("db.php"); // Include your database connection
 
 $cart = $_SESSION['cart'] ?? [];
 $msg = "";
 
+// Check if cart is empty
 if (!$cart) {
     $msg = "Your cart is empty!";
 }
 
+// Handle form submission
 if ($_SERVER["REQUEST_METHOD"] === "POST" && $cart) {
     $name = trim($_POST['name']);
     $email = trim($_POST['email']);
@@ -26,10 +28,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && $cart) {
 
     $orderDetails = implode("\n", $details);
 
+    // Insert order into database
     $stmt = $conn->prepare("INSERT INTO orders (customer_name, customer_email, customer_phone, whatsapp, total, order_details) VALUES (?, ?, ?, ?, ?, ?)");
     $stmt->execute([$name, $email, $phone, $whatsapp, $total, $orderDetails]);
 
-    $_SESSION['cart'] = []; // Clear cart
+    // Clear cart after successful order
+    $_SESSION['cart'] = [];
     $msg = "✅ Your order has been placed successfully! Total: $total EGP";
 }
 ?>
@@ -46,6 +50,7 @@ form { max-width: 400px; margin: auto; display: flex; flex-direction: column; ga
 input, textarea { padding: 8px; width: 100%; box-sizing: border-box; }
 button { padding: 10px; background: #333; color: white; border: none; cursor: pointer; border-radius: 5px; }
 button:hover { background: #555; }
+ul { padding-left: 20px; }
 </style>
 </head>
 <body>
