@@ -1,90 +1,48 @@
 <?php
 session_start();
-include "db.php";
+include("db.php");
 
-// Check if user is logged in
-if (!isset($_SESSION["user_id"])) {
-    header("Location: login.php");
-    exit;
-}
-
-// Check if user is admin
-$sql = "SELECT role FROM users WHERE id=?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $_SESSION["user_id"]);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
-
-if ($user["role"] != "admin") {
-    die("Access denied ❌ You are not an admin.");
-}
-
-// Upload helper function
-function uploadImage($file) {
-    $targetDir = "uploads/";
-    if (!file_exists($targetDir)) {
-        mkdir($targetDir, 0777, true);
-    }
-    $fileName = time() . "_" . basename($file["name"]);
-    $targetFile = $targetDir . $fileName;
-
-    if (move_uploaded_file($file["tmp_name"], $targetFile)) {
-        return $fileName;
-    }
-    return null;
+// Only admin can access
+if (!isset($_SESSION["user"]) || $_SESSION["role"] != "admin") {
+    die("Access denied ❌");
 }
 
 // Handle Add Product
 if (isset($_POST["add"])) {
-    $name = $_POST["name"];
-    $desc = $_POST["description"];
-    $price = $_POST["price"];
-    $image = null;
+    $name = trim($_POST["name"]);
+    $desc = trim($_POST["description"]);
+    $price = floatval($_POST["price"]);
+    $image = trim($_POST["image"]);
 
-    if (!empty($_FILES["image"]["name"])) {
-        $image = uploadImage($_FILES["image"]);
+    if ($name && $price && $image) {
+        $stmt = $conn->prepare("INSERT INTO products (name, description, price, image) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$name, $desc, $price, $image]);
     }
-
-    $sql = "INSERT INTO products (name, description, price, image) VALUES (?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssds", $name, $desc, $price, $image);
-    $stmt->execute();
 }
 
 // Handle Delete Product
 if (isset($_GET["delete"])) {
-    $id = $_GET["delete"];
-    $sql = "DELETE FROM products WHERE id=?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
+    $id = intval($_GET["delete"]);
+    $stmt = $conn->prepare("DELETE FROM products WHERE id=?");
+    $stmt->execute([$id]);
 }
 
 // Handle Update Product
 if (isset($_POST["update"])) {
-    $id = $_POST["id"];
-    $name = $_POST["name"];
-    $desc = $_POST["description"];
-    $price = $_POST["price"];
-    $image = null;
+    $id = intval($_POST["id"]);
+    $name = trim($_POST["name"]);
+    $desc = trim($_POST["description"]);
+    $price = floatval($_POST["price"]);
+    $image = trim($_POST["image"]);
 
-    if (!empty($_FILES["image"]["name"])) {
-        $image = uploadImage($_FILES["image"]);
-        $sql = "UPDATE products SET name=?, description=?, price=?, image=? WHERE id=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssdsi", $name, $desc, $price, $image, $id);
-    } else {
-        $sql = "UPDATE products SET name=?, description=?, price=? WHERE id=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssdi", $name, $desc, $price, $id);
-    }
-    $stmt->execute();
+    $stmt = $conn->prepare("UPDATE products SET name=?, description=?, price=?, image=? WHERE id=?");
+    $stmt->execute([$name, $desc, $price, $image, $id]);
 }
 
-// Fetch Products
-$result = $conn->query("SELECT * FROM products");
+// Fetch all products
+$products = $conn->query("SELECT * FROM products ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -95,62 +53,50 @@ $result = $conn->query("SELECT * FROM products");
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     table, th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
     th { background: #f4f4f4; }
-    img { width: 80px; height: auto; border-radius: 6px; }
-    .btn { padding: 6px 10px; text-decoration: none; border-radius: 4px; }
-    .btn-danger { background: red; color: white; }
-    .btn-edit { background: orange; color: white; }
+    input { width: 100%; padding: 5px; box-sizing: border-box; }
+    .btn { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; }
+    .btn-delete { background: red; color: white; }
+    .btn-update { background: orange; color: white; }
   </style>
 </head>
 <body>
-  <div class="form-container">
-    <h2>Admin Dashboard 🛠️</h2>
+  <h1>Admin Dashboard 🛠️</h1>
 
-    <!-- Add Product Form -->
-    <form method="post" enctype="multipart/form-data">
-      <input type="text" name="name" placeholder="Product Name" required>
-      <input type="text" name="description" placeholder="Description">
-      <input type="number" step="0.01" name="price" placeholder="Price (EGP)" required>
-      <input type="file" name="image" accept="image/*">
-      <button type="submit" name="add">Add Product</button>
-    </form>
+  <h2>Add Product</h2>
+  <form method="post">
+    <input type="text" name="name" placeholder="Product Name" required><br><br>
+    <textarea name="description" placeholder="Product Description"></textarea><br><br>
+    <input type="number" step="0.01" name="price" placeholder="Price" required><br><br>
+    <input type="text" name="image" placeholder="Image URL (e.g. images/watch1.jpg)" required><br><br>
+    <button type="submit" name="add">Add Product</button>
+  </form>
 
-    <!-- Product List -->
-    <table>
-      <tr>
-        <th>ID</th>
-        <th>Image</th>
-        <th>Name</th>
-        <th>Description</th>
-        <th>Price (EGP)</th>
-        <th>Actions</th>
-      </tr>
-      <?php while ($row = $result->fetch_assoc()): ?>
-      <tr>
-        <form method="post" enctype="multipart/form-data">
-          <td><?= $row["id"] ?></td>
-          <td>
-            <?php if ($row["image"]): ?>
-              <img src="uploads/<?= $row["image"] ?>" alt="Product">
-            <?php else: ?>
-              ❌ No Image
-            <?php endif; ?>
-            <input type="file" name="image" accept="image/*">
-          </td>
-          <td><input type="text" name="name" value="<?= $row['name'] ?>"></td>
-          <td><input type="text" name="description" value="<?= $row['description'] ?>"></td>
-          <td><input type="number" step="0.01" name="price" value="<?= $row['price'] ?>"></td>
-          <td>
-            <input type="hidden" name="id" value="<?= $row['id'] ?>">
-            <button type="submit" name="update" class="btn btn-edit">Update</button>
-            <a href="admin.php?delete=<?= $row['id'] ?>" class="btn btn-danger">Delete</a>
-          </td>
-        </form>
-      </tr>
-      <?php endwhile; ?>
-    </table>
-
-    <br>
-    <a href="dashboard.php">⬅ Back to Dashboard</a>
-  </div>
+  <h2>Manage Products</h2>
+  <table>
+    <tr>
+      <th>ID</th>
+      <th>Image</th>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Price</th>
+      <th>Actions</th>
+    </tr>
+    <?php foreach ($products as $p): ?>
+    <tr>
+      <form method="post">
+        <td><?= $p['id'] ?></td>
+        <td><input type="text" name="image" value="<?= $p['image'] ?>"></td>
+        <td><input type="text" name="name" value="<?= $p['name'] ?>"></td>
+        <td><input type="text" name="description" value="<?= $p['description'] ?>"></td>
+        <td><input type="number" step="0.01" name="price" value="<?= $p['price'] ?>"></td>
+        <td>
+          <input type="hidden" name="id" value="<?= $p['id'] ?>">
+          <button type="submit" name="update" class="btn btn-update">Update</button>
+          <a href="admin.php?delete=<?= $p['id'] ?>" class="btn btn-delete">Delete</a>
+        </td>
+      </form>
+    </tr>
+    <?php endforeach; ?>
+  </table>
 </body>
 </html>
