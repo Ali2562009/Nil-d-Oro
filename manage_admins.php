@@ -12,7 +12,14 @@ if ($row['role'] === 'super') {
         echo "<a href='delete_admin.php?id={$row['id']}' class='btn delete' onclick=\"return confirm('Are you sure?');\">🗑️ Delete</a>";
     }
 }
-
+<td>
+  <?php 
+    echo $row['username']; 
+    if ($row['role'] === 'super') { 
+        echo " <span style='color:gold;'>👑</span>"; 
+    }
+  ?>
+</td>
 include 'db.php';
 ?>
 
