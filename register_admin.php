@@ -1,32 +1,29 @@
 <?php
 session_start();
-include 'db.php';
-
-// Only logged-in admins can create new admins
 if (!isset($_SESSION['admin'])) {
     header("Location: admin_login.php");
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = trim($_POST['username']);
-    $password = trim($_POST['password']);
-    $confirm_password = trim($_POST['confirm_password']);
+include 'db.php';
+include 'log_action.php';
 
-    if ($password !== $confirm_password) {
-        $error = "Passwords do not match.";
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $username = $_POST['username'];
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+
+    $stmt = $conn->prepare("INSERT INTO admins (username, password) VALUES (?, ?)");
+    $stmt->bind_param("ss", $username, $password);
+
+    if ($stmt->execute()) {
+        // Log action
+        logAction($conn, $_SESSION['admin'], "Add", $username);
+        echo "✅ Admin registered successfully.";
     } else {
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-
-        $stmt = $conn->prepare("INSERT INTO admins (username, password) VALUES (?, ?)");
-        $stmt->bind_param("ss", $username, $hashed_password);
-
-        if ($stmt->execute()) {
-            $success = "New admin created successfully!";
-        } else {
-            $error = "Error: Username may already exist.";
-        }
+        echo "❌ Error: " . $stmt->error;
     }
+
+    $stmt->close();
 }
 ?>
 
@@ -34,20 +31,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Nil d’Oro - Register Admin</title>
+  <title>Register Admin - Nil d’Oro</title>
 </head>
 <body>
-  <h2>Create New Admin</h2>
-  <?php if (isset($error)) echo "<p style='color:red;'>$error</p>"; ?>
-  <?php if (isset($success)) echo "<p style='color:green;'>$success</p>"; ?>
-  
+  <h1>👑 Register New Admin</h1>
   <form method="POST">
-    <label>Username: <input type="text" name="username" required></label><br>
-    <label>Password: <input type="password" name="password" required></label><br>
-    <label>Confirm Password: <input type="password" name="confirm_password" required></label><br>
-    <button type="submit">Register Admin</button>
+    <label>Username:</label><br>
+    <input type="text" name="username" required><br><br>
+
+    <label>Password:</label><br>
+    <input type="password" name="password" required><br><br>
+
+    <button type="submit">Register</button>
   </form>
-  
-  <p><a href="admin.php">⬅ Back to Admin Panel</a></p>
 </body>
 </html>
