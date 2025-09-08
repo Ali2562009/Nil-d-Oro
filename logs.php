@@ -6,6 +6,18 @@ if (!isset($_SESSION['admin'])) {
 }
 include 'db.php';
 ?>
+<td>
+  <?php 
+    echo $row['actor']; 
+    $check = $conn->prepare("SELECT role FROM admins WHERE username=?");
+    $check->bind_param("s", $row['actor']);
+    $check->execute();
+    $check->bind_result($role);
+    $check->fetch();
+    $check->close();
+    if ($role === 'super') { echo " <span style='color:gold;'>👑</span>"; }
+  ?>
+</td>
 
 <!DOCTYPE html>
 <html lang="en">
