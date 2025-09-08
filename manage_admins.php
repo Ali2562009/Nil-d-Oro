@@ -4,6 +4,14 @@ if (!isset($_SESSION['admin'])) {
     header("Location: admin_login.php");
     exit();
 }
+if ($row['role'] === 'super') {
+    echo "<span style='color:gold; font-weight:bold;'>👑 Super Admin</span>";
+} else {
+    echo "<a href='edit_admin.php?id={$row['id']}' class='btn edit'>✏️ Edit</a>";
+    if ($row['username'] !== $_SESSION['admin']) {
+        echo "<a href='delete_admin.php?id={$row['id']}' class='btn delete' onclick=\"return confirm('Are you sure?');\">🗑️ Delete</a>";
+    }
+}
 
 include 'db.php';
 ?>
