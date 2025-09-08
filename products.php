@@ -1,109 +1,93 @@
 <?php
 session_start();
-include("db.php");
+include 'db.php';
 
-// Initialize cart
-if (!isset($_SESSION['cart'])) {
-    $_SESSION['cart'] = [];
+// Handle search & filter
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$category = isset($_GET['category']) ? trim($_GET['category']) : '';
+$minPrice = isset($_GET['minPrice']) ? (int)$_GET['minPrice'] : 0;
+$maxPrice = isset($_GET['maxPrice']) ? (int)$_GET['maxPrice'] : 999999;
+
+// Fetch categories for filter dropdown
+$categories = [];
+$result = $conn->query("SELECT DISTINCT category FROM products");
+while ($row = $result->fetch_assoc()) {
+    $categories[] = $row['category'];
 }
 
-// Handle adding product to cart
-if (isset($_POST['add_to_cart'])) {
-    $id = intval($_POST['product_id']);
-    $name = $_POST['product_name'];
-    $price = floatval($_POST['product_price']);
+// Build query
+$sql = "SELECT * FROM products WHERE active=1 AND price BETWEEN ? AND ? AND name LIKE ?";
+$params = [$minPrice, $maxPrice, "%$search%"];
+$types = "iis";
 
-    if (isset($_SESSION['cart'][$id])) {
-        $_SESSION['cart'][$id]['quantity'] += 1;
-    } else {
-        $_SESSION['cart'][$id] = ['name'=>$name, 'price'=>$price, 'quantity'=>1];
-    }
+if ($category !== '') {
+    $sql .= " AND category=?";
+    $params[] = $category;
+    $types .= "s";
 }
 
-// Fetch products from DB
-$search = $_GET['search'] ?? '';
-$sql = "SELECT * FROM products WHERE name LIKE ?";
 $stmt = $conn->prepare($sql);
-$stmt->execute(["%$search%"]);
-$products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$stmt->bind_param($types, ...$params);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Nil d’Oro - Products</title>
-<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
-
-<style>
-body { font-family: 'Times New Roman', serif; background:#f9f5ec; margin:20px; color:#333; }
-header { text-align:center; margin-bottom:30px; }
-.logo { font-family:'Great Vibes', cursive; font-size:52px; color:#333; letter-spacing:1px; }
-h1, h2, h3, p, li, label { font-family:'Great Vibes', cursive; }
-.products { display:flex; flex-wrap:wrap; gap:15px; justify-content:center; }
-.product { border:1px solid #ccc; padding:10px; width:200px; border-radius:8px; position:relative; cursor:pointer; background:#fffdf6; box-shadow:0 4px 8px rgba(0,0,0,0.1);}
-.product h3 { margin:0 0 10px; font-size:16px; }
-.product p { margin:0 0 10px; }
-button { padding:6px 10px; border-radius:5px; cursor:pointer; border:none; background:#333; color:white; font-family:'Great Vibes', cursive; }
-button:hover { background:#555; }
-
-/* Popup styles */
-.popup { position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; }
-.popup-content { background:#fff; padding:20px; border-radius:10px; position:relative; max-width:300px; text-align:center; }
-.popup-content .close { position:absolute; top:5px; right:10px; cursor:pointer; font-weight:bold; }
-</style>
+  <meta charset="UTF-8">
+  <title>Nil d’Oro | Products</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <header>
+    <h1 style="font-family: 'Tangerine', cursive; font-size: 3rem;">Nil d’Oro</h1>
+    <nav>
+      <a href="index.php">Home</a> |
+      <a href="cart.php">🛒 Cart (<?php echo isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0; ?>)</a>
+    </nav>
+  </header>
 
-<header>
-    <div class="logo">Nil d’Oro</div>
-    <h1>Products 🛍️</h1>
-</header>
+  <main>
+    <h2>Our Products</h2>
 
-<form method="get" style="text-align:center; margin-bottom:20px;">
-    <input type="text" name="search" placeholder="Search products..." value="<?= htmlspecialchars($search) ?>" style="padding:6px; border-radius:5px; border:1px solid #ccc;">
-    <button type="submit">Search</button>
-</form>
+    <!-- 🔎 Search & Filter Form -->
+    <form method="GET" style="margin-bottom:20px;">
+      <input type="text" name="search" placeholder="Search products..." value="<?php echo htmlspecialchars($search); ?>">
+      
+      <select name="category">
+        <option value="">All Categories</option>
+        <?php foreach ($categories as $cat) { ?>
+          <option value="<?php echo htmlspecialchars($cat); ?>" <?php if ($cat==$category) echo "selected"; ?>>
+            <?php echo htmlspecialchars($cat); ?>
+          </option>
+        <?php } ?>
+      </select>
 
-<div class="products">
-<?php foreach($products as $p): ?>
-<div class="product" onclick="showPopup('<?= htmlspecialchars($p['name']) ?>')">
-    <h3><?= htmlspecialchars($p['name']) ?></h3>
-    <p>Price: <?= $p['price'] ?> EGP</p>
-    <form method="post">
-        <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
-        <input type="hidden" name="product_name" value="<?= htmlspecialchars($p['name']) ?>">
-        <input type="hidden" name="product_price" value="<?= $p['price'] ?>">
-        <button type="submit" name="add_to_cart">Add to Cart</button>
+      <input type="number" name="minPrice" placeholder="Min Price" value="<?php echo $minPrice; ?>">
+      <input type="number" name="maxPrice" placeholder="Max Price" value="<?php echo $maxPrice; ?>">
+
+      <button type="submit">Filter</button>
     </form>
-</div>
-<?php endforeach; ?>
-</div>
 
-<!-- Popup -->
-<div class="popup" id="popup">
-    <div class="popup-content">
-        <span class="close" onclick="closePopup()">×</span>
-        <p id="popupText"></p>
-        <p>Contact us:</p>
-        <p>WhatsApp: +201234567890</p>
-        <p>Telegram: @YourTelegram</p>
-        <p>Phone: +201234567890</p>
+    <!-- 🛍️ Product Grid -->
+    <div class="product-grid">
+      <?php if ($result->num_rows > 0) { 
+        while ($row = $result->fetch_assoc()) { ?>
+          <div class="product-card">
+            <img src="<?php echo htmlspecialchars($row['image']); ?>" alt="<?php echo htmlspecialchars($row['name']); ?>">
+            <h3><?php echo htmlspecialchars($row['name']); ?></h3>
+            <p><?php echo htmlspecialchars($row['description']); ?></p>
+            <p><strong>$<?php echo number_format($row['price'], 2); ?></strong></p>
+            <form method="POST" action="add_to_cart.php">
+              <input type="hidden" name="product_id" value="<?php echo $row['id']; ?>">
+              <button type="submit">Add to Cart</button>
+            </form>
+          </div>
+      <?php } } else { ?>
+          <p>No products found matching your search.</p>
+      <?php } ?>
     </div>
-</div>
-
-<script>
-function showPopup(name) {
-    document.getElementById('popupText').innerText = name;
-    document.getElementById('popup').style.display = 'flex';
-}
-function closePopup() {
-    document.getElementById('popup').style.display = 'none';
-}
-document.getElementById('popup').addEventListener('click', function(e){
-    if(e.target === this) closePopup();
-});
-</script>
-
+  </main>
 </body>
 </html>
